@@ -112,13 +112,8 @@ public class BookView : Gtk.Box
 
         scroll = new Gtk.Scrollbar (Gtk.Orientation.HORIZONTAL, null);
         adjustment = scroll.adjustment;
-        adjustment.changed.connect (() => {
-            // The GTK docs are not clear about what happens when an adjustment is programatically updated. Although a
-            // UI update does appear to be triggered, the reported result is the scrollbar inexplicably losing its
-            // trough/slider (https://gitlab.gnome.org/GNOME/simple-scan/-/issues/430). It's unclear if this heavyweight
-            // solution should be required.
-            scroll.queue_resize();
-        });
+        adjustment.value_changed.connect (scroll_cb);
+        adjustment.changed.connect (scroll_properties_cb);
         append (scroll);
 
         drawing_area.resize.connect (drawing_area_resize_cb);
@@ -148,8 +143,6 @@ public class BookView : Gtk.Box
         focus_controller.leave.connect_after (focus_cb);
         drawing_area.add_controller(focus_controller);
 
-        adjustment.value_changed.connect (scroll_cb);
-
         drawing_area.visible = true;
     }
 
@@ -169,6 +162,7 @@ public class BookView : Gtk.Box
         focus_controller.enter.disconnect (focus_cb);
         focus_controller.leave.disconnect (focus_cb);
         adjustment.value_changed.disconnect (scroll_cb);
+        adjustment.changed.disconnect (scroll_properties_cb);
     }
 
     private PageView get_nth_page (int n)
@@ -651,6 +645,15 @@ public class BookView : Gtk.Box
     {
        if (!laying_out)
            redraw ();
+    }
+
+    private void scroll_properties_cb (Gtk.Adjustment adjustment)
+    {
+        // The GTK docs are not clear about what happens when an adjustment properites are updated. Although a UI update
+        // does appear to be triggered, the reported result is the scrollbar inexplicably losing its trough/slider
+        // (https://gitlab.gnome.org/GNOME/simple-scan/-/issues/430). It's unclear if this call should be required
+        // (possible GTK bug?).
+        scroll.queue_resize();
     }
 
     public void redraw ()
