@@ -649,11 +649,12 @@ public class BookView : Gtk.Box
 
     private void scroll_properties_cb (Gtk.Adjustment adjustment)
     {
-        // The GTK docs are not clear about what happens when an adjustment properites are updated. Although a UI update
-        // does appear to be triggered, the reported result is the scrollbar inexplicably losing its trough/slider
-        // (https://gitlab.gnome.org/GNOME/simple-scan/-/issues/430). It's unclear if this call should be required
-        // (possible GTK bug?).
-        scroll.queue_resize();
+        if (scroll != null && scroll.get_realized())
+            // FIXME: Although a UI update appears to be triggered when a property adjustment is made, the result is the
+            // scrollbar inexplicably loses its trough/slider (https://gitlab.gnome.org/GNOME/simple-scan/-/issues/430).
+            // This change fixes the problem's symptom but it there is certainly a more fundamental issue; this fix is
+            // flawed as it triggers the warning: "Trying to snapshot GtkScrollbar xxx without a current allocation".
+            scroll.queue_resize();
     }
 
     public void redraw ()
