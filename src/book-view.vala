@@ -661,11 +661,11 @@ public class BookView : Gtk.Box
             return false;
         }
         else if (dy >= 0 && dx >= 0) {
-            // Right and/or down
+            // Down and/or right
             select_next_page();
         }
         else if (dy <= 0 && dx <= 0) {
-            // Left and/or up
+            // Up and/or left
             select_prev_page();
         }
         return true;
