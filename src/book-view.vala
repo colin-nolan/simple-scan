@@ -159,6 +159,7 @@ public class BookView : Gtk.Box
         book.cleared.disconnect (clear_cb);
         drawing_area.resize.disconnect (drawing_area_resize_cb);
         motion_controller.motion.disconnect (motion_cb);
+        cursor_scroll_controller.scroll.disconnect (cursor_scroll_cb);
         key_controller.key_pressed.disconnect (key_cb);
         primary_click_gesture.pressed.disconnect (primary_pressed_cb);
         primary_click_gesture.released.disconnect (primary_released_cb);
@@ -167,7 +168,6 @@ public class BookView : Gtk.Box
         focus_controller.enter.disconnect (focus_cb);
         focus_controller.leave.disconnect (focus_cb);
         adjustment.value_changed.disconnect (scroll_cb);
-        cursor_scroll_controller.scroll.disconnect (cursor_scroll_cb);
     }
 
     private PageView get_nth_page (int n)
@@ -654,8 +654,18 @@ public class BookView : Gtk.Box
 
     private bool cursor_scroll_cb (Gtk.EventControllerScroll controller, double dx, double dy)
     {
-        stderr.printf("CALLED: cursor_scroll_cb\n");
-        return false;
+        if (dx == 0 && dy == 0) {
+            return false;
+        }
+        else if (dy >= 0 && dx >= 0) {
+            // Right and/or down
+            select_next_page();
+        }
+        else if (dy <= 0 && dx <= 0) {
+            // Left and/or up
+            select_prev_page();
+        }
+        return true;
     }
 
     public void redraw ()
