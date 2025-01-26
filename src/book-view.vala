@@ -22,7 +22,7 @@ public class BookView : Gtk.Box
     private bool need_layout;
     private bool laying_out;
     private bool show_selected_page;
-    
+
     /* Currently selected page */
     private PageView? selected_page_view = null;
     public Page? selected_page
@@ -54,11 +54,12 @@ public class BookView : Gtk.Box
     private Gtk.Adjustment adjustment;
 
     private new string cursor;
-    
+
     private Gtk.EventControllerMotion motion_controller;
-    private Gtk.EventControllerKey key_controller; 
-    private Gtk.GestureClick primary_click_gesture; 
-    private Gtk.GestureClick secondary_click_gesture; 
+    private Gtk.EventControllerScroll cursor_scroll_controller;
+    private Gtk.EventControllerKey key_controller;
+    private Gtk.GestureClick primary_click_gesture;
+    private Gtk.GestureClick secondary_click_gesture;
     private Gtk.EventControllerFocus focus_controller;
 
 
@@ -123,17 +124,24 @@ public class BookView : Gtk.Box
         motion_controller.motion.connect (motion_cb);
         drawing_area.add_controller(motion_controller);
 
-        key_controller = new Gtk.EventControllerKey (); 
+        cursor_scroll_controller = new Gtk.EventControllerScroll (
+            Gtk.EventControllerScrollFlags.BOTH_AXES
+                | Gtk.EventControllerScrollFlags.DISCRETE
+        );
+        cursor_scroll_controller.scroll.connect (cursor_scroll_cb);
+        drawing_area.add_controller(cursor_scroll_controller);
+
+        key_controller = new Gtk.EventControllerKey ();
         key_controller.key_pressed.connect (key_cb);
         drawing_area.add_controller(key_controller);
 
-        primary_click_gesture = new Gtk.GestureClick (); 
+        primary_click_gesture = new Gtk.GestureClick ();
         primary_click_gesture.button = Gdk.BUTTON_PRIMARY;
         primary_click_gesture.pressed.connect (primary_pressed_cb);
         primary_click_gesture.released.connect (primary_released_cb);
         drawing_area.add_controller(primary_click_gesture);
 
-        secondary_click_gesture = new Gtk.GestureClick (); 
+        secondary_click_gesture = new Gtk.GestureClick ();
         secondary_click_gesture.button = Gdk.BUTTON_SECONDARY;
         secondary_click_gesture.pressed.connect (secondary_pressed_cb);
         secondary_click_gesture.released.connect (secondary_released_cb);
@@ -155,6 +163,7 @@ public class BookView : Gtk.Box
         book.cleared.disconnect (clear_cb);
         drawing_area.resize.disconnect (drawing_area_resize_cb);
         motion_controller.motion.disconnect (motion_cb);
+        cursor_scroll_controller.scroll.disconnect (cursor_scroll_cb);
         key_controller.key_pressed.disconnect (key_cb);
         primary_click_gesture.pressed.disconnect (primary_pressed_cb);
         primary_click_gesture.released.disconnect (primary_released_cb);
@@ -322,7 +331,7 @@ public class BookView : Gtk.Box
     public void drawing_area_resize_cb ()
     {
         need_layout = true;
-        // Let's layout ahead of time 
+        // Let's layout ahead of time
         // to avoid "Trying to snapshot GtkGizmo without a current allocation" error
         layout ();
     }
@@ -434,17 +443,17 @@ public class BookView : Gtk.Box
             /* Re-layout leaving space for scrollbar */
             height = allocation.height;
             layout_into (width, height, out book_width, out book_height);
- 
+
             /* Set scrollbar limits */
             adjustment.lower = 0;
             adjustment.upper = book_width;
             adjustment.page_size = allocation.width;
- 
+
             /* Keep right-aligned */
             var max_offset = book_width - allocation.width;
             if (right_aligned || x_offset > max_offset)
                 x_offset = max_offset;
- 
+
             scroll.visible = true;
         }
         else
@@ -587,10 +596,10 @@ public class BookView : Gtk.Box
     private void motion_cb (Gtk.EventControllerMotion controler, double dx, double dy)
     {
         string cursor = "arrow";
-        
+
         int event_x = (int) dx;
         int event_y = (int) dy;
-        
+
         var event_state = controler.get_current_event_state();
 
         /* Dragging */
@@ -656,6 +665,22 @@ public class BookView : Gtk.Box
             // This change fixes the problem's symptom but it there is certainly a more fundamental issue; this fix is
             // flawed as it triggers the warning: "Trying to snapshot GtkScrollbar xxx without a current allocation".
             scroll.queue_resize();
+    }
+
+    private bool cursor_scroll_cb (Gtk.EventControllerScroll controller, double dx, double dy)
+    {
+        if (dx == 0 && dy == 0) {
+            return false;
+        }
+        else if (dy >= 0 && dx >= 0) {
+            // Down and/or right
+            select_next_page();
+        }
+        else if (dy <= 0 && dx <= 0) {
+            // Up and/or left
+            select_prev_page();
+        }
+        return true;
     }
 
     public void redraw ()
