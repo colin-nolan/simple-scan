@@ -121,7 +121,10 @@ public class BookView : Gtk.Box
         motion_controller.motion.connect (motion_cb);
         drawing_area.add_controller(motion_controller);
 
-        cursor_scroll_controller = new Gtk.EventControllerScroll (Gtk.EventControllerScrollFlags.BOTH_AXES);
+        cursor_scroll_controller = new Gtk.EventControllerScroll (
+            Gtk.EventControllerScrollFlags.BOTH_AXES
+                | Gtk.EventControllerScrollFlags.DISCRETE
+        );
         cursor_scroll_controller.scroll.connect (cursor_scroll_cb);
         drawing_area.add_controller(cursor_scroll_controller);
 
