@@ -54,11 +54,12 @@ public class BookView : Gtk.Box
     private Gtk.Adjustment adjustment;
 
     private new string cursor;
-    
+
     private Gtk.EventControllerMotion motion_controller;
-    private Gtk.EventControllerKey key_controller; 
-    private Gtk.GestureClick primary_click_gesture; 
-    private Gtk.GestureClick secondary_click_gesture; 
+    private Gtk.EventControllerScroll cursor_scroll_controller;
+    private Gtk.EventControllerKey key_controller;
+    private Gtk.GestureClick primary_click_gesture;
+    private Gtk.GestureClick secondary_click_gesture;
     private Gtk.EventControllerFocus focus_controller;
 
 
@@ -120,7 +121,11 @@ public class BookView : Gtk.Box
         motion_controller.motion.connect (motion_cb);
         drawing_area.add_controller(motion_controller);
 
-        key_controller = new Gtk.EventControllerKey (); 
+        cursor_scroll_controller = new Gtk.EventControllerScroll (Gtk.EventControllerScrollFlags.BOTH_AXES);
+        cursor_scroll_controller.scroll.connect (cursor_scroll_cb);
+        drawing_area.add_controller(cursor_scroll_controller);
+
+        key_controller = new Gtk.EventControllerKey ();
         key_controller.key_pressed.connect (key_cb);
         drawing_area.add_controller(key_controller);
 
@@ -162,6 +167,7 @@ public class BookView : Gtk.Box
         focus_controller.enter.disconnect (focus_cb);
         focus_controller.leave.disconnect (focus_cb);
         adjustment.value_changed.disconnect (scroll_cb);
+        cursor_scroll_controller.scroll.disconnect (cursor_scroll_cb);
     }
 
     private PageView get_nth_page (int n)
@@ -644,6 +650,12 @@ public class BookView : Gtk.Box
     {
        if (!laying_out)
            redraw ();
+    }
+
+    private bool cursor_scroll_cb (Gtk.EventControllerScroll controller, double dx, double dy)
+    {
+        stderr.printf("CALLED: cursor_scroll_cb\n");
+        return false;
     }
 
     public void redraw ()
