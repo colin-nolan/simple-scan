@@ -113,6 +113,8 @@ public class BookView : Gtk.Box
 
         scroll = new Gtk.Scrollbar (Gtk.Orientation.HORIZONTAL, null);
         adjustment = scroll.adjustment;
+        adjustment.value_changed.connect (scroll_cb);
+        adjustment.changed.connect (scroll_properties_cb);
         append (scroll);
 
         drawing_area.resize.connect (drawing_area_resize_cb);
@@ -142,8 +144,6 @@ public class BookView : Gtk.Box
         focus_controller.leave.connect_after (focus_cb);
         drawing_area.add_controller(focus_controller);
 
-        adjustment.value_changed.connect (scroll_cb);
-
         drawing_area.visible = true;
     }
 
@@ -163,6 +163,7 @@ public class BookView : Gtk.Box
         focus_controller.enter.disconnect (focus_cb);
         focus_controller.leave.disconnect (focus_cb);
         adjustment.value_changed.disconnect (scroll_cb);
+        adjustment.changed.disconnect (scroll_properties_cb);
     }
 
     private PageView get_nth_page (int n)
@@ -645,6 +646,16 @@ public class BookView : Gtk.Box
     {
        if (!laying_out)
            redraw ();
+    }
+
+    private void scroll_properties_cb (Gtk.Adjustment adjustment)
+    {
+        if (scroll != null && scroll.get_realized())
+            // FIXME: Although a UI update appears to be triggered when a property adjustment is made, the result is the
+            // scrollbar inexplicably loses its trough/slider (https://gitlab.gnome.org/GNOME/simple-scan/-/issues/430).
+            // This change fixes the problem's symptom but it there is certainly a more fundamental issue; this fix is
+            // flawed as it triggers the warning: "Trying to snapshot GtkScrollbar xxx without a current allocation".
+            scroll.queue_resize();
     }
 
     public void redraw ()
