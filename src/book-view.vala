@@ -105,6 +105,7 @@ public class BookView : Gtk.Box
         drawing_area = new Gtk.DrawingArea ();
         drawing_area.set_size_request (200, 100);
         drawing_area.can_focus = true;
+        drawing_area.focusable = true;
         drawing_area.vexpand = true;
         drawing_area.set_draw_func(draw_cb);
 
@@ -617,16 +618,16 @@ public class BookView : Gtk.Box
     {
         switch (keyval)
         {
-        case 0xff50: /* FIXME: GDK_Home */
+        case Gdk.Key.Home:
             selected_page = book.get_page (0);
             return true;
-        case 0xff51: /* FIXME: GDK_Left */
+        case Gdk.Key.Left:
             select_page_view (get_prev_page (selected_page_view));
             return true;
-        case 0xff53: /* FIXME: GDK_Right */
+        case Gdk.Key.Right:
             select_page_view (get_next_page (selected_page_view));
             return true;
-        case 0xFF57: /* FIXME: GDK_End */
+        case Gdk.Key.End:
             selected_page = book.get_page ((int) book.n_pages - 1);
             return true;
 
