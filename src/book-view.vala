@@ -112,6 +112,13 @@ public class BookView : Gtk.Box
 
         scroll = new Gtk.Scrollbar (Gtk.Orientation.HORIZONTAL, null);
         adjustment = scroll.adjustment;
+        adjustment.changed.connect (() => {
+            // The GTK docs are not clear about what happens when an adjustment is programatically updated. Although a
+            // UI update does appear to be triggered, the reported result is the scrollbar inexplicably losing its
+            // trough/slider (https://gitlab.gnome.org/GNOME/simple-scan/-/issues/430). It's unclear if this heavyweight
+            // solution should be required.
+            scroll.queue_resize();
+        });
         append (scroll);
 
         drawing_area.resize.connect (drawing_area_resize_cb);
